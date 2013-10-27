@@ -72,10 +72,11 @@ function getRawTweetsFromAWS($client, $start_value) {
     
     //print_r ($jsonObj);
 
+ 
     //convert array to json
-    //$jsonArray = json_encode($jsonObj);
+    //$json = json_encode($jsonObj);
 
-    //print_r ($jsonArray);
+
     $array = array();
     $count = 1;
     for($i=0; $i<3; $i++) {

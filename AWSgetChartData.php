@@ -11,11 +11,11 @@
    $randNeu = rand(0,5);
    $randNeg = rand(0,5);
 
-   $randT1 = rand(0,20)-10/1000;
-   $randT2 = rand(0,20)-10/1000;
-   $randT3 = rand(0,20)-10/1000;
-   $randT4 = rand(0,20)-10/1000;
-   $randT5 = rand(0,20)-10/1000;
+   $randT1 = rand(0,1)-10/1000;
+   $randT2 = rand(0,1)-10/1000;
+   $randT3 = rand(0,1)-10/1000;
+   $randT4 = rand(0,1)-10/1000;
+   $randT5 = rand(0,1)-10/1000;
    
  
 $chartData = array(
