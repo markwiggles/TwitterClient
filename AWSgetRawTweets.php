@@ -71,12 +71,30 @@ function getRawTweetsFromAWS($client, $start_value) {
     $jsonObj= $result['Items'];
     
     //print_r ($jsonObj);
-    
-   //convert array to json
-   $jsonArray = json_encode($jsonObj);
-   
-   print_r ($jsonArray);
 
+    //convert array to json
+    //$jsonArray = json_encode($jsonObj);
+
+    //print_r ($jsonArray);
+    for($i=0; $i<2; $i++) {
+        $jsonTweetDecode = (array) json_decode($result['Items'][$i]['rawTweet']['S']);
+        //echo $jsonTweetDecode['id_str']."<br />";
+        //echo $jsonTweetDecode['text']."<br />";
+        //echo $jsonTweetDecode['created_at']."<br />";
+        //print_r($jsonTweetDecode);
+        $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
+        //echo $jsonTweetUserDecode['screen_name']."<br />";
+        //echo $jsonTweetUserDecode['profile_image_url']."<br />";
+        //echo $jsonTweetUserDecode['followers_count']."<br /><br />";
+        $array = array();
+        $tweetArray = array($jsonTweetDecode['id_str'], $jsonTweetDecode['text'], $jsonTweetDecode['created_at'], $jsonTweetUserDecode['screen_name'], $jsonTweetUserDecode['profile_image_url'], $jsonTweetUserDecode['followers_count']);
+        $tweetNo = array($i => $tweetArray);
+        //print_r($tweetNo);
+        //$jsonArray = json_encode($tweetNo);
+        array_push($array, $tweetNo);
+        $jsonArray = json_encode($array);
+    }
+    print_r($jsonArray);
 
 }
 
