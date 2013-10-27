@@ -7,6 +7,8 @@ chartTimeOut = "";
 
    // Set a callback to run when the Google Visualization API is loaded.
     google.setOnLoadCallback(getChartData);
+    
+    //drawVisualization();
 
 function getChartData() {
 
@@ -63,8 +65,9 @@ function drawChart2(item) {
 }
 
 
-function poll() {
-    chartTimeOut = setTimeout('poll()', 300);//It calls itself every xms
+function pollChart() {
+    chartTimeOut = setTimeout('pollChart()', 2000);//It calls itself every xms
+    getChartData();
 
 
  
@@ -74,5 +77,6 @@ function poll() {
 }
 
 $(document).ready(function() {
-    poll();
+    pollChart();
 });
+

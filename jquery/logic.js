@@ -1,5 +1,5 @@
 last = '';
-timeOut;
+timeOut = "";
 
 function getTweets(id) {
     $.getJSON("AWSgetTweets.php?start=" + id,
@@ -7,7 +7,7 @@ function getTweets(id) {
                 $.each(data, function(count, item) {
                     addNew(item);
                     last = item.rangeId.N;
-                    console.log(item.rangeId.N);
+                    //console.log(item.rangeId.N);
                 });
             });
 }
