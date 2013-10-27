@@ -63,7 +63,7 @@ function getRawTweetsFromAWS($client, $start_value) {
         'ScanIndexForward' => false
     ));
     
-    print "rangeID startValue: " .$start_value."<br><br>";
+    //print "rangeID startValue: " .$start_value."<br><br>";
        
     //var_dump($result);
     
@@ -88,15 +88,17 @@ function getRawTweetsFromAWS($client, $start_value) {
         //echo $jsonTweetUserDecode['screen_name']."<br />";
         //echo $jsonTweetUserDecode['profile_image_url']."<br />";
         //echo $jsonTweetUserDecode['followers_count']."<br /><br />";
-        
-        $tweetArray = array($jsonTweetDecode['id_str'], $jsonTweetDecode['text'], $jsonTweetDecode['created_at'], $jsonTweetUserDecode['screen_name'], $jsonTweetUserDecode['profile_image_url'], $jsonTweetUserDecode['followers_count']);
-        $tweetNo = array($count => $tweetArray);
-        //print_r($tweetNo);
-        //$jsonArray = json_encode($tweetNo);
-        array_push($array, $tweetNo);
-        $jsonArray = json_encode($array);
-        $count++;
+        if(stripos($jsonTweetDecode['text'], 'perfect') == true){
+            $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "created_at"=>$jsonTweetDecode['created_at'], "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
+            //$tweetNo = array($count => $tweetArray);
+            //print_r($tweetNo);
+            //$jsonArray = json_encode($tweetNo);
+            array_push($array, $tweetArray);
+            $jsonArray = json_encode($array);    
+        }
+        $count++; 
     }
+    //print_r($array);
     print_r($jsonArray);
 
 }
