@@ -11,8 +11,12 @@ error_reporting(E_ALL);
  */
 
 require 'AWSSDKforPHP/aws.phar';
+require_once('lib/TwitterSentimentAnalysis.php');
 
 use Aws\DynamoDb\DynamoDbClient;
+
+// Configure  Datumbox API Key. 
+define('DATUMBOX_API_KEY', '78006b9cafa5dbd4f0b57f6ae0c897d7');
 
 $client = DynamoDbClient::factory(array(
             'key' => 'AKIAIK7RCPMWTZVQWJIA',
@@ -67,41 +71,60 @@ function getRawTweetsFromAWS($client, $start_value) {
        
     //var_dump($result);
     
-    //send the json file out
-    $jsonObj= $result['Items'];
-    
-    //print_r ($jsonObj);
-
- 
-    //convert array to json
-    //$json = json_encode($jsonObj);
-
-
     $array = array();
-    $count = 1;
     for($i=0; $i<3; $i++) {
+        $jsonRangeDecode = json_decode($result['Items'][$i]['rangeId']['N']);
         $jsonTweetDecode = (array) json_decode($result['Items'][$i]['rawTweet']['S']);
-        //echo $jsonTweetDecode['id_str']."<br />";
-        //echo $jsonTweetDecode['text']."<br />";
-        //echo $jsonTweetDecode['created_at']."<br />";
-        //print_r($jsonTweetDecode);
         $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
-        //echo $jsonTweetUserDecode['screen_name']."<br />";
-        //echo $jsonTweetUserDecode['profile_image_url']."<br />";
-        //echo $jsonTweetUserDecode['followers_count']."<br /><br />";
-        if(stripos($jsonTweetDecode['text'], 'perfect') == true){
-            $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "created_at"=>$jsonTweetDecode['created_at'], "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
+
+        if(stripos($jsonTweetDecode['text'], 'a') == true){
+            $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
             //$tweetNo = array($count => $tweetArray);
             //print_r($tweetNo);
             //$jsonArray = json_encode($tweetNo);
             array_push($array, $tweetArray);
-            $jsonArray = json_encode($array);    
+               
         }
-        $count++; 
+        $jsonArray = json_encode($array); 
     }
-    //print_r($array);
     print_r($jsonArray);
 
+    foreach($array as $tweet) {
+        //Clean the inputs before storing
+        $twitterId = addslashes($tweet['id']);
+        $text = addslashes($tweet['text']);
+        $screen_name = addslashes($tweet['screen_name']);
+        $profile_image_url = addslashes($tweet['profile_image_url']);
+        $followers_count = addslashes($tweet['followers_count']);
+
+        //idexId and the created_at time
+        $indexId = 'tweets';
+        $rangeId = $tweet['range_id'];
+        $created_at = date("D M j G:i:s" , $rangeId);
+
+        $tableName = 'tweets';
+
+        //get the sentiment 
+        $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
+        $sentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($text));
+        
+        //We store the new post in the database, to be able to read it later
+        //insert into AWS dynamoDb
+        $insertResult = $client->putItem(array(
+            'TableName' => $tableName,
+            'Item' => array(
+                'indexId' => array('S' => $indexId),
+                'rangeId' => array('N' => $rangeId),
+                'twitter_id' => array('N' => $twitterId),
+                'created_at' => array('S' => $created_at ),
+                'text' => array('S' => $text),
+                'screen_name' => array('S' => $screen_name),
+                'profile_image_url' => array('S' => $profile_image_url),
+                'followers_count' => array('N' => $followers_count),
+                'sentiment' => array('S' => $sentiment)
+                ),
+        ));
+    }
 }
 
 
