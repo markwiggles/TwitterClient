@@ -1,9 +1,9 @@
 <?php
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+session_start();
+$sessId = session_id();
 ?>
+
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -25,6 +25,7 @@
     <body>
         <div id="wrapper">
             <div class="container">
+
 
                 <div class="row-fluid" id="header">
                     <h1>TwitterSentiments</h1>
@@ -61,6 +62,12 @@
                 <div id="tweets">  </div>
             </div><!--end container-->
         </div><!--end wrapper-->
+
+        <?php
+        print "<p id=\"sessId\" style=\"display:none\">". $sessId . "</p>";
+        ?>
+
+
     </body>
 </html>
 </body>

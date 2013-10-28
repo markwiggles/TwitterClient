@@ -2,8 +2,13 @@ last = '';
 timeOut = "";
 
 function getTweets(id) {
-    $.getJSON("AWSgetTweets.php?start=" + id,
+    
+    var sessId = ($('#sessId').html());
+    
+    $.getJSON("AWSgetTweets.php?start=" + id + "&sessId=" + sessId,
             function(data) {
+                
+                
                 $.each(data, function(count, item) {
                     addNew(item);
                     last = item.rangeId.N;
