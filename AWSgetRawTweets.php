@@ -47,7 +47,7 @@ function getRawTweetsFromAWS($client, $start_value) {
 
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 10,
+        'Limit' => 100,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -72,21 +72,23 @@ function getRawTweetsFromAWS($client, $start_value) {
     //var_dump($result);
     
     $array = array();
-    
+    $array2 = array();
     //gets the trackwords from the command live ie the exec command in Start.php
     //$trackWords = unserialize($argv[1]);
-    $trackWords = array('perfect', 'emosi'); //testing
+    $trackWords = array('life', 'perfect man'); //testing
     foreach($result['Items'] as $item) {
         $jsonRangeDecode = json_decode($item['rangeId']['N']);
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
-        //print_r($jsonTweetDecode['delete']->status);
-        if (contains($jsonTweetDecode['text'], $trackWords, $caseInsensitive=true ) == true) {
-            $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
-            $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
-            //$tweetNo = array($count => $tweetArray);
-            //print_r($tweetNo);
-            //$jsonArray = json_encode($tweetNo);
-            array_push($array, $tweetArray);    
+
+        foreach($trackWords as $trackWord) {
+            if(stripos($jsonTweetDecode['text'], $trackWord) != false) {
+                $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
+                $tweetArray = array("trackword"=>$trackWord,"id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
+                //$tweetNo = array($count => $tweetArray);
+                //print_r($tweetNo);
+                //$jsonArray = json_encode($tweetNo);
+                array_push($array, $tweetArray);    
+            }
         }
         $jsonArray = json_encode($array); 
     }
