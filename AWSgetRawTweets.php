@@ -81,11 +81,18 @@ function getRawTweetsFromAWS($client, $start_value) {
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
 
         foreach($trackWords as $trackWord) {
-            // || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)
-            //echo str_replace(' ', '', $trackWord)."\n\n";
+            
             if((stripos($jsonTweetDecode['text'], $trackWord) != false) || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)) {
                 $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
-                $tweetArray = array("trackword"=>$trackWord,"id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
+                $jsonTweetLocationDecode = (array) $jsonTweetDecode['place'];
+                
+                if($jsonTweetLocationDecode == null) {
+                    $tweetLocation = "n/a";
+                } else {
+                    $tweetLocation = $jsonTweetLocationDecode[full_name];
+                }
+                
+                $tweetArray = array("trackword"=>$trackWord,"id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count'], "location"=>$tweetLocation);
                 //$tweetNo = array($count => $tweetArray);
                 //print_r($tweetNo);
                 //$jsonArray = json_encode($tweetNo);
@@ -98,11 +105,13 @@ function getRawTweetsFromAWS($client, $start_value) {
 
     foreach($array as $tweet) {
         //Clean the inputs before storing
+        //$track_word = addcslashes($tweet['trackword']);
         $twitterId = addslashes($tweet['id']);
         $text = addslashes($tweet['text']);
         $screen_name = addslashes($tweet['screen_name']);
         $profile_image_url = addslashes($tweet['profile_image_url']);
         $followers_count = addslashes($tweet['followers_count']);
+        $location = addslashes($tweet['location']);
 
         //idexId and the created_at time
         $indexId = 'tweets';
@@ -120,6 +129,7 @@ function getRawTweetsFromAWS($client, $start_value) {
         $insertResult = $client->putItem(array(
             'TableName' => $tableName,
             'Item' => array(
+                //'trackword'=>array('S' => $track_word),
                 'indexId' => array('S' => $indexId),
                 'rangeId' => array('N' => $rangeId),
                 'twitter_id' => array('N' => $twitterId),
