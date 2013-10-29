@@ -47,7 +47,7 @@ function getRawTweetsFromAWS($client, $start_value) {
 
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 3,
+        'Limit' => 10,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -72,13 +72,16 @@ function getRawTweetsFromAWS($client, $start_value) {
     //var_dump($result);
     
     $array = array();
-    $keywords = array('perfect', 'emosi');
-    for($i=0; $i<3; $i++) {
-        $jsonRangeDecode = json_decode($result['Items'][$i]['rangeId']['N']);
-        $jsonTweetDecode = (array) json_decode($result['Items'][$i]['rawTweet']['S']);
-        $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
-
-        if (contains($jsonTweetDecode['text'], $keywords, $caseInsensitive=false ) == true) {
+    
+    //gets the trackwords from the command live ie the exec command in Start.php
+    //$trackWords = unserialize($argv[1]);
+    $trackWords = array('perfect', 'emosi'); //testing
+    foreach($result['Items'] as $item) {
+        $jsonRangeDecode = json_decode($item['rangeId']['N']);
+        $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
+        //print_r($jsonTweetDecode['delete']->status);
+        if (contains($jsonTweetDecode['text'], $trackWords, $caseInsensitive=true ) == true) {
+            $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
             $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
             //$tweetNo = array($count => $tweetArray);
             //print_r($tweetNo);
@@ -89,42 +92,42 @@ function getRawTweetsFromAWS($client, $start_value) {
     }
     print_r($jsonArray);
 
-//    foreach($array as $tweet) {
-//        //Clean the inputs before storing
-//        $twitterId = addslashes($tweet['id']);
-//        $text = addslashes($tweet['text']);
-//        $screen_name = addslashes($tweet['screen_name']);
-//        $profile_image_url = addslashes($tweet['profile_image_url']);
-//        $followers_count = addslashes($tweet['followers_count']);
-//
-//        //idexId and the created_at time
-//        $indexId = 'tweets';
-//        $rangeId = $tweet['range_id'];
-//        $created_at = date("D M j G:i:s" , $rangeId);
-//
-//        $tableName = 'tweets';
-//
-//        //get the sentiment 
-//        $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
-//        $sentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($text));
-//        
-//        //We store the new post in the database, to be able to read it later
-//        //insert into AWS dynamoDb
-//        $insertResult = $client->putItem(array(
-//            'TableName' => $tableName,
-//            'Item' => array(
-//                'indexId' => array('S' => $indexId),
-//                'rangeId' => array('N' => $rangeId),
-//                'twitter_id' => array('N' => $twitterId),
-//                'created_at' => array('S' => $created_at ),
-//                'text' => array('S' => $text),
-//                'screen_name' => array('S' => $screen_name),
-//                'profile_image_url' => array('S' => $profile_image_url),
-//                'followers_count' => array('N' => $followers_count),
-//                'sentiment' => array('S' => $sentiment)
-//                ),
-//        ));
-//    }
+    foreach($array as $tweet) {
+        //Clean the inputs before storing
+        $twitterId = addslashes($tweet['id']);
+        $text = addslashes($tweet['text']);
+        $screen_name = addslashes($tweet['screen_name']);
+        $profile_image_url = addslashes($tweet['profile_image_url']);
+        $followers_count = addslashes($tweet['followers_count']);
+
+        //idexId and the created_at time
+        $indexId = 'tweets';
+        $rangeId = $tweet['range_id'];
+        $created_at = date("D M j G:i:s" , $rangeId);
+
+        $tableName = 'tweets';
+
+        //get the sentiment 
+        $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
+        $sentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($text));
+        
+        //We store the new post in the database, to be able to read it later
+        //insert into AWS dynamoDb
+        $insertResult = $client->putItem(array(
+            'TableName' => $tableName,
+            'Item' => array(
+                'indexId' => array('S' => $indexId),
+                'rangeId' => array('N' => $rangeId),
+                'twitter_id' => array('N' => $twitterId),
+                'created_at' => array('S' => $created_at ),
+                'text' => array('S' => $text),
+                'screen_name' => array('S' => $screen_name),
+                'profile_image_url' => array('S' => $profile_image_url),
+                'followers_count' => array('N' => $followers_count),
+                'sentiment' => array('S' => $sentiment)
+                ),
+        ));
+    }
 }
 
 function contains( $string, array $search, $caseInsensitive=false ){
