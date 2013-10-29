@@ -81,7 +81,9 @@ function getRawTweetsFromAWS($client, $start_value) {
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
 
         foreach($trackWords as $trackWord) {
-            if(stripos($jsonTweetDecode['text'], $trackWord) != false) {
+            // || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)
+            //echo str_replace(' ', '', $trackWord)."\n\n";
+            if((stripos($jsonTweetDecode['text'], $trackWord) != false) || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)) {
                 $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
                 $tweetArray = array("trackword"=>$trackWord,"id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count']);
                 //$tweetNo = array($count => $tweetArray);
