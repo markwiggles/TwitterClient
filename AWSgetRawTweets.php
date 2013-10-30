@@ -47,7 +47,7 @@ function getRawTweetsFromAWS($client, $start_value) {
 
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 10,
+        'Limit' => 100,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -72,7 +72,7 @@ function getRawTweetsFromAWS($client, $start_value) {
     //var_dump($result);
     $jsonObj = $result['Items'];
     
-    //filter required tweets from the raw tweets
+    //filter required tweets
     filterTweets($client, $jsonObj);
 }
 
@@ -86,7 +86,7 @@ function filterTweets($client, array $jsonObj) {
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
         
         //get range and created at
-        $rangeId = json_decode($item['rangeId']['N']);
+        $rangeId = $item['rangeId']['N'];
         $created_at = date("D M j G:i:s" , $item['rangeId']['N']);
 
         //apply filter to user given trackword(s)
@@ -109,12 +109,16 @@ function filterTweets($client, array $jsonObj) {
                 $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
                 $tweetSentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($jsonTweetDecode['text']));
                 
-                $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], 
-                    "rangeId"=>$rangeId, "created_at"=>$created_at, 
-                    "screen_name"=>$jsonTweetUserDecode['screen_name'], 
+                $tweetArray = array("text"=>$jsonTweetDecode['text'],
+                    "indexId"=>'tweets', 
+                    "rangeId"=>$rangeId, 
                     "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], 
+                    "sentiment"=>$tweetSentiment, 
+                    "created_at"=>$created_at, 
+                    "twitter_id"=>$jsonTweetDecode['id_str'], 
+                    "screen_name"=>$jsonTweetUserDecode['screen_name'], 
                     "followers_count"=>$jsonTweetUserDecode['followers_count'], 
-                    "sentiment"=>$tweetSentiment, "location"=>$tweetLocation);
+                    "location"=>$tweetLocation);
                 array_push($array, $tweetArray);    
             }
         }
@@ -129,7 +133,7 @@ function filterTweets($client, array $jsonObj) {
 function insertTweets($client, array $array) {
     foreach($array as $tweet) {
         //Clean the inputs before storing
-        $twitterId = addslashes($tweet['id']);
+        $twitterId = addslashes($tweet['twitter_id']);
         $text = addslashes($tweet['text']);
         $screen_name = addslashes($tweet['screen_name']);
         $profile_image_url = addslashes($tweet['profile_image_url']);
@@ -138,7 +142,7 @@ function insertTweets($client, array $array) {
         $location = addslashes($tweet['location']);
                 
         //indexId and the created_at time
-        $indexId = 'tweets';
+        $indexId = $tweet['indexId'];
         $rangeId = $tweet['rangeId'];
         $created_at = $tweet['created_at'];
 
