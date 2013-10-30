@@ -47,7 +47,7 @@ function getRawTweetsFromAWS($client, $start_value) {
 
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 100,
+        'Limit' => 10,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -70,66 +70,86 @@ function getRawTweetsFromAWS($client, $start_value) {
     //print "rangeID startValue: " .$start_value."<br><br>";
        
     //var_dump($result);
+    $jsonObj = $result['Items'];
     
+    //filter required tweets from the raw tweets
+    filterTweets($client, $jsonObj);
+}
+
+function filterTweets($client, array $jsonObj) {
     $array = array();
-    $array2 = array();
     //gets the trackwords from the command live ie the exec command in Start.php
     //$trackWords = unserialize($argv[1]);
     $trackWords = array('life', 'perfect man'); //testing
-    foreach($result['Items'] as $item) {
-        $jsonRangeDecode = json_decode($item['rangeId']['N']);
+    foreach($jsonObj as $item) {
+        //get tweet
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
+        
+        //get range and created at
+        $rangeId = json_decode($item['rangeId']['N']);
+        $created_at = date("D M j G:i:s" , $item['rangeId']['N']);
 
+        //apply filter to user given trackword(s)
         foreach($trackWords as $trackWord) {
-            
+            //check if tweet text contains trackword(s)
             if((stripos($jsonTweetDecode['text'], $trackWord) != false) || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)) {
+                //get user details
                 $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
+                //get tweet place details
                 $jsonTweetLocationDecode = (array) $jsonTweetDecode['place'];
                 
+                //get the location
                 if($jsonTweetLocationDecode == null) {
                     $tweetLocation = "n/a";
                 } else {
                     $tweetLocation = $jsonTweetLocationDecode[full_name];
                 }
                 
-                $tweetArray = array("trackword"=>$trackWord,"id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], "range_id"=>$jsonRangeDecode, "screen_name"=>$jsonTweetUserDecode['screen_name'], "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], "followers_count"=>$jsonTweetUserDecode['followers_count'], "location"=>$tweetLocation);
-                //$tweetNo = array($count => $tweetArray);
-                //print_r($tweetNo);
-                //$jsonArray = json_encode($tweetNo);
+                //get the sentiment 
+                $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
+                $tweetSentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($jsonTweetDecode['text']));
+                
+                $tweetArray = array("id"=>$jsonTweetDecode['id_str'], "text"=>$jsonTweetDecode['text'], 
+                    "rangeId"=>$rangeId, "created_at"=>$created_at, 
+                    "screen_name"=>$jsonTweetUserDecode['screen_name'], 
+                    "profile_image_url"=>$jsonTweetUserDecode['profile_image_url'], 
+                    "followers_count"=>$jsonTweetUserDecode['followers_count'], 
+                    "sentiment"=>$tweetSentiment, "location"=>$tweetLocation);
                 array_push($array, $tweetArray);    
             }
         }
         $jsonArray = json_encode($array); 
     }
-    print_r($jsonArray);
+    print $jsonArray;
+    
+    //insert filtered tweets in the tweets table
+    insertTweets($client, $array);
+}
 
+function insertTweets($client, array $array) {
     foreach($array as $tweet) {
         //Clean the inputs before storing
-        //$track_word = addcslashes($tweet['trackword']);
         $twitterId = addslashes($tweet['id']);
         $text = addslashes($tweet['text']);
         $screen_name = addslashes($tweet['screen_name']);
         $profile_image_url = addslashes($tweet['profile_image_url']);
         $followers_count = addslashes($tweet['followers_count']);
+        $sentiment = addslashes($tweet['sentiment']);
         $location = addslashes($tweet['location']);
-
-        //idexId and the created_at time
+                
+        //indexId and the created_at time
         $indexId = 'tweets';
-        $rangeId = $tweet['range_id'];
-        $created_at = date("D M j G:i:s" , $rangeId);
+        $rangeId = $tweet['rangeId'];
+        $created_at = $tweet['created_at'];
 
         $tableName = 'tweets';
 
-        //get the sentiment 
-        $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
-        $sentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($text));
         
         //We store the new post in the database, to be able to read it later
         //insert into AWS dynamoDb
         $insertResult = $client->putItem(array(
             'TableName' => $tableName,
             'Item' => array(
-                //'trackword'=>array('S' => $track_word),
                 'indexId' => array('S' => $indexId),
                 'rangeId' => array('N' => $rangeId),
                 'twitter_id' => array('N' => $twitterId),
@@ -138,7 +158,8 @@ function getRawTweetsFromAWS($client, $start_value) {
                 'screen_name' => array('S' => $screen_name),
                 'profile_image_url' => array('S' => $profile_image_url),
                 'followers_count' => array('N' => $followers_count),
-                'sentiment' => array('S' => $sentiment)
+                'sentiment' => array('S' => $sentiment),
+                'location' => array('S' => $location)
                 ),
         ));
     }
