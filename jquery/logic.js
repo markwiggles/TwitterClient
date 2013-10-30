@@ -3,15 +3,15 @@ timeOut = "";
 
 function getTweets(id) {
     
-    var sessId = ($('#sessId').html());
+    //var sessId = ($('#sessId').html());
     
-    $.getJSON("AWSgetTweets.php?start=" + id + "&sessId=" + sessId,
+    $.getJSON("AWSgetRawTweets.php?start=" + id,// + "&sessId=" + sessId,
             function(data) {
                 
                 
                 $.each(data, function(count, item) {
                     addNew(item);
-                    last = item.rangeId.N;
+                    last = item.rangeId;
                     //console.log(item.rangeId.N);
                 });
             });
@@ -27,18 +27,18 @@ function addNew(item) {
 }
 
 function renderTweet(item) {
-    var importanceColor = getImportanceColor(item.followers_count.N);
-    var sentimentColor = getSentimentColor(item.sentiment.S);
-    var imageLink = "http://twitter.com/" + item.screen_name.S;
-    var createdLink = "http://twitter.com/" + item.screen_name.S + "/status/" + item.rangeId.N;
+    var importanceColor = getImportanceColor(item.followers_count);
+    var sentimentColor = getSentimentColor(item.sentiment);
+    var imageLink = "http://twitter.com/" + item.screen_name;
+    var createdLink = "http://twitter.com/" + item.screen_name + "/status/" + item.rangeId;
 
     $("#tweets")
-    .append($("<div>").addClass("tweet").attr("id", item.indexId.N)
-    .append($("<img>").attr("src", item.profile_image_url.S).addClass("image"))
-    .append($("<a>").attr("href", imageLink).append(item.screen_name.S).attr("style", "color:" + importanceColor))
-    .append($("<p>").append(item.text.S).addClass("tweetText"))
-    .append($("<p>").append("<br>created ").append(item.created_at.S).addClass("created"))
-    .append($("<p>").addClass("sentiment").append("Sentiment Analysis: ").append(item.sentiment.S).attr("style", "color:" + sentimentColor))
+    .append($("<div>").addClass("tweet").attr("id", item.indexId)
+    .append($("<img>").attr("src", item.profile_image_url).addClass("image"))
+    .append($("<a>").attr("href", imageLink).append(item.screen_name).attr("style", "color:" + importanceColor))
+    .append($("<p>").append(item.text).addClass("tweetText"))
+    .append($("<p>").append("<br>created ").append(item.created_at).addClass("created"))
+    .append($("<p>").addClass("sentiment").append("Sentiment Analysis: ").append(item.sentiment).attr("style", "color:" + sentimentColor))
     );
 }
 
