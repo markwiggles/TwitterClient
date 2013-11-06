@@ -37,11 +37,11 @@ if (isset($_GET['trackWords'])) {
     //$trackWords = $_GET['trackWords'];
     
     
-    $trackWords = array('life', 'perfect man'); //testing
+    $trackWords = array('life'); //testing
      
 } else {
     //test array
-    $trackWords = array('life', 'perfect man'); //testing
+    $trackWords = array('life'); //testing
 }
 
 
@@ -146,7 +146,7 @@ function filterTweets($client, array $jsonObj) {
     print $jsonArray;
     
     //insert filtered tweets in the tweets table
-    insertTweets($client, $array);
+    //insertTweets($client, $array);
 }
 
 function insertTweets($client, array $array) {
