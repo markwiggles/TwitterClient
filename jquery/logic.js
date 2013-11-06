@@ -1,6 +1,6 @@
 last = '';
 timeOut = "";
-trackwords= "";
+trackWords= "";
 
 $(document).ready (function() {  
     //set up the click function for the getTweets button
@@ -13,7 +13,7 @@ $(document).ready (function() {
 
 function getTweets(id) {
     
-    $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackwords=" + trackwords,
+    $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackWords=" + trackWords,
             function(data) {
                                
                 $.each(data, function(count, item) {
@@ -67,7 +67,7 @@ function getSentimentColor(text) {
 }
 
 function poll() {
-    timeOut = setTimeout('poll()', 300);//It calls itself every 200ms
+    timeOut = setTimeout('poll()', 300);//It calls itself every xms
     getTweets(last);
 }
 

@@ -31,9 +31,9 @@ if (isset($_GET['start'])) {
 } else {
     $start = time();
 }
-if (isset($_GET['trackwords'])) {
+if (isset($_GET['trackWords'])) {
     
-    $trackWords = $_GET['trackwords'];
+    $trackWords = $_GET['trackWords'];
      
 } else {
     //test array
