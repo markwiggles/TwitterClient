@@ -1,25 +1,31 @@
 last = '';
 timeOut = "";
+trackwords= "";
+
+$(document).ready (function() {  
+    //set up the click function for the getTweets button
+    $('#submitTrackWords').click(function() {       
+         trackwords = $('#trackWords').val();//get words
+        $('#trackWords').val(""); //empty textbox
+    }); 
+});
+
 
 function getTweets(id) {
     
-    //var sessId = ($('#sessId').html());
-    
-    $.getJSON("AWSgetRawTweets.php?start=" + id,// + "&sessId=" + sessId,
+    $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackwords=" + trackwords,
             function(data) {
-                
-                
+                               
                 $.each(data, function(count, item) {
                     addNew(item);
                     last = item.rangeId;
-                    //console.log(item.rangeId.N);
                 });
             });
 }
 
 function addNew(item) {
     if ($('#tweets div.tweet').length > 9) { //If we have more than nine tweets
-        $('#tweets div.tweet:first').toggle(500);//remove it form the screen
+        $('#tweets div.tweet:first').toggle(500);//remove it from the screen
         $('#tweets div.tweet:first').removeClass('tweet');//and it's class
         $("#tweets div:hidden").remove(); //sweeps the already hidden elements
     }

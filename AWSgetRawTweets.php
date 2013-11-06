@@ -24,13 +24,22 @@ $client = DynamoDbClient::factory(array(
             'region' => 'us-west-2'
         ));
 
-//get the start value which has been sent by the ajax method
+//get the start value and trackwords which have been sent by the ajax method
 if (isset($_GET['start'])) {
     $start = time();
     //$start = mysql_real_escape_string($_GET['start']);
 } else {
     $start = time();
 }
+if (isset($_GET['trackwords'])) {
+    
+    $trackWords = $_GET['trackwords'];
+     
+} else {
+    //test array
+    $trackWords = array('life', 'perfect man'); //testing
+}
+
 
 
 getRawTweetsFromAWS($client, $start);
@@ -38,7 +47,7 @@ getRawTweetsFromAWS($client, $start);
 
 /*
  * function to get the tweets from the AWS database, passing the start value from the browser (if there is one)
- * else defaults to the last start value - ir the last tweet in the database
+ * else defaults to the last start value - ie the last tweet in the database
  */
 
 function getRawTweetsFromAWS($client, $start_value) {
@@ -76,11 +85,17 @@ function getRawTweetsFromAWS($client, $start_value) {
     filterTweets($client, $jsonObj);
 }
 
+/*
+ * function to filter the tweets from the AWS database, passing the start value from the browser (if there is one)
+ * else defaults to the last start value - ie the last tweet in the database
+ */
+
 function filterTweets($client, array $jsonObj) {
+    
     $array = array();
-    //gets the trackwords from the command live ie the exec command in Start.php
-    //$trackWords = unserialize($argv[1]);
-    $trackWords = array('life', 'perfect man'); //testing
+    
+    global $trackWords;
+    
     foreach($jsonObj as $item) {
         //get tweet
         $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
@@ -131,6 +146,7 @@ function filterTweets($client, array $jsonObj) {
 }
 
 function insertTweets($client, array $array) {
+    
     foreach($array as $tweet) {
         //Clean the inputs before storing
         $twitterId = addslashes($tweet['twitter_id']);

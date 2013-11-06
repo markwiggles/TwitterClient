@@ -71,8 +71,8 @@ function drawChart2(item) {
 
 
 function pollChart() {
-    chartTimeOut = setTimeout('pollChart()', 2000);//It calls itself every xms
-    getChartData();
+    //chartTimeOut = setTimeout('pollChart()', 2000);//It calls itself every xms
+    //getChartData();
 
 
 
@@ -82,6 +82,6 @@ function pollChart() {
 }
 
 $(document).ready(function() {
-    pollChart();
+    //pollChart();
 });
 

@@ -1,9 +1,3 @@
-<?php
-session_start();
-$sessId = session_id();
-?>
-
-
 <!DOCTYPE html>
 <html>
     <head>
@@ -14,9 +8,7 @@ $sessId = session_id();
 
         <script src="jquery/charts.js"></script>
         <script src="jquery/logic.js"></script>
-        <script src="jquery/data.js"></script>
 
-<!--<script src="testFiles/testData.js"></script>-->
 
         <link rel="stylesheet" type="text/css" href="css/mainStylesheet.css"/>
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen"/>
@@ -36,14 +28,14 @@ $sessId = session_id();
 
                     <form id="trackInput" class="span9">
                         <div class="input-prepend">
+                            
                             <span><i class="icon-search"></i></span>
-                            <input class="input-medium search-query span7" type="text" name="trackWords" placeholder="enter tracking words with commas separating"value="" size="500" />
-                            <input class="btn" type="submit" value="Get Tweets" name="getTweets" />
+                            <input class="input-medium search-query span7" type="text" id="trackWords" placeholder="enter tracking words with commas separating" value="" size="500" />
+                            <input class="btn" id="submitTrackWords" value="Get Tweets" name="getTweets" />
+                          
                         </div>
                     </form>
-                    <form id="stopTweets" class="span2">
-                        <input class="btn" type="submit" value="Stop Tweets" name="stopTweets" />
-                    </form>
+
                 </div><!--end input-->
 
                 <div class="btn-group btn-group-sm">
@@ -62,11 +54,6 @@ $sessId = session_id();
                 <div id="tweets">  </div>
             </div><!--end container-->
         </div><!--end wrapper-->
-
-        <?php
-        print "<p id=\"sessId\" style=\"display:none\">". $sessId . "</p>";
-        ?>
-
 
     </body>
 </html>
