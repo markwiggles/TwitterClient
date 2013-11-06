@@ -15,10 +15,11 @@ function getTweets(id) {
     
     $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackWords=" + trackWords,
             function(data) {
-                               
+                    console.log(data);          
                 $.each(data, function(count, item) {
                     addNew(item);
                     last = item.rangeId;
+                    console.log(item.rangeId);
                 });
             });
 }
