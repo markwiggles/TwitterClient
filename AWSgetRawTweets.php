@@ -33,7 +33,11 @@ if (isset($_GET['start'])) {
 }
 if (isset($_GET['trackWords'])) {
     
-    $trackWords = $_GET['trackWords'];
+    //needs to go to array
+    //$trackWords = $_GET['trackWords'];
+    
+    
+    $trackWords = array('life', 'perfect man'); //testing
      
 } else {
     //test array
