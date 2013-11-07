@@ -1,13 +1,13 @@
 <?php
 
-//for testing purposes
+//For testing purposes
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', dirname(__FILE__) . '/error_log.txt');
 error_reporting(E_ALL);
 
 /*
-  gets the tweets from the AWS database
+  Gets the tweets from the MSrawTweets table of DynamoDB
  */
 
 require 'AWSSDKforPHP/aws.phar';
@@ -15,7 +15,7 @@ require_once('lib/TwitterSentimentAnalysis.php');
 
 use Aws\DynamoDb\DynamoDbClient;
 
-// Configure  Datumbox API Key. 
+//Configure  Datumbox API Key. 
 define('DATUMBOX_API_KEY', 'f170aec75a2c1270b7ad451ddd07db79');
 
 $client = DynamoDbClient::factory(array(
@@ -24,18 +24,18 @@ $client = DynamoDbClient::factory(array(
             'region' => 'us-west-2'
         ));
 
-//get the start value and trackwords which have been sent by the ajax method
+//Get the start value which have been sent by the ajax method
 if (isset($_GET['start'])) {
     $start = time();
     //$start = mysql_real_escape_string($_GET['start']);
 } else {
     $start = time();
 }
+
+//Get the trackwords which have been sent by the ajax method
 if (isset($_GET['trackWords'])) {
-    
     //needs to go to array
     //$trackWords = $_GET['trackWords'];
-    
     
     $trackWords = array('life'); //testing
      
@@ -44,20 +44,23 @@ if (isset($_GET['trackWords'])) {
     $trackWords = array('life'); //testing
 }
 
-
-
-getRawTweetsFromAWS($client, $start);
+//Function call to begin retrieving, filtering & storing tweets
+getRawTweets($client, $start);
 
 
 /*
- * function to get the tweets from the AWS database, passing the start value from the browser (if there is one)
- * else defaults to the last start value - ie the last tweet in the database
+ * Function to get the tweets from the AWS database, 
+ * passing the start value from the browser 
+ * (if there is one) else defaults to the last 
+ * start value - ie the last tweet in the database
  */
-
-function getRawTweetsFromAWS($client, $start_value) {
-
+function getRawTweets($client, $start_value) {
+    //Name of the DynamoDB table which stores
+    //raw tweets from the twitter stream
     $tableName = 'MSrawTweets';
-
+    
+    //Connect to DynamoDB and retrieve last 100 rows
+    //from MSrawTweets table
     $result = $client->query(array(
         'TableName' => $tableName,
         'Limit' => 100,
@@ -80,54 +83,59 @@ function getRawTweetsFromAWS($client, $start_value) {
         'ScanIndexForward' => false
     ));
     
-    //print "rangeID startValue: " .$start_value."<br><br>";
-       
-    //var_dump($result);
-    $jsonObj = $result['Items'];
+    //Store the entire result set from the 'Query'
+    $resultObj = $result['Items'];
     
-    //filter required tweets
-    filterTweets($client, $jsonObj);
-}
+    //Function call to filter the tweets
+    filterTweets($client, $resultObj);
+}//end of getRawTweets
 
 /*
- * function to filter the tweets from the AWS database, passing the start value from the browser (if there is one)
- * else defaults to the last start value - ie the last tweet in the database
+ * Function to filter the tweets from the AWS database, 
+ * based on the 100 results returned from getRawTweets()
  */
-
-function filterTweets($client, array $jsonObj) {
-    
-    $array = array();
+function filterTweets($client, array $resultObj) {
+    //An array to store the filtered tweets based
+    //on the given trackword(s)
+    $filteredArray = array();
     
     global $trackWords;
     
-    foreach($jsonObj as $item) {
-        //get tweet
-        $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
-        
-        //get range and created at
+    //Loop through each of the tweets returned from
+    //getRawTweets() 
+    foreach($resultObj as $item) {
+        //Get range (timestamp as a number) and 
+        //created at (formatted range)
         $rangeId = $item['rangeId']['N'];
         $created_at = date("D M j G:i:s" , $item['rangeId']['N']);
+        
+        //Get all the tweet related content
+        //This includes text, followers count etc
+        $jsonTweetDecode = (array) json_decode($item['rawTweet']['S']);
 
-        //apply filter to user given trackword(s)
+        //Apply filter to user given trackword(s)
         foreach($trackWords as $trackWord) {
-            //check if tweet text contains trackword(s)
+            //Check if tweet text contains the trackword(s)
+            //The check is performed by querying with the trackword
+            //with and without white spaces
             if((stripos($jsonTweetDecode['text'], $trackWord) != false) || (stripos($jsonTweetDecode['text'], str_replace(' ', '', $trackWord)) != false)) {
-                //get user details
+                //Get user details
                 $jsonTweetUserDecode = (array) $jsonTweetDecode['user'];
-                //get tweet place details
+                //Get tweet location details
                 $jsonTweetLocationDecode = (array) $jsonTweetDecode['place'];
                 
-                //get the location
+                //Check if location available or not
                 if($jsonTweetLocationDecode == null) {
                     $tweetLocation = "n/a";
                 } else {
-                    $tweetLocation = $jsonTweetLocationDecode[full_name];
+                    $tweetLocation = $jsonTweetLocationDecode['full_name'];
                 }
                 
-                //get the sentiment 
+                //Get the sentiment using Datumbox API
                 $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);
                 $tweetSentiment = addslashes($TwitterSentimentAnalysis->sentimentAnalysis($jsonTweetDecode['text']));
                 
+                //Stored the tweet content in an array
                 $tweetArray = array("text"=>$jsonTweetDecode['text'],
                     "indexId"=>'tweets', 
                     "rangeId"=>$rangeId, 
@@ -138,21 +146,31 @@ function filterTweets($client, array $jsonObj) {
                     "screen_name"=>$jsonTweetUserDecode['screen_name'], 
                     "followers_count"=>$jsonTweetUserDecode['followers_count'], 
                     "location"=>$tweetLocation);
-                array_push($array, $tweetArray);    
+                //Store arrays of filtered tweets 
+                array_push($filteredArray, $tweetArray);    
             }
         }
-        $jsonArray = json_encode($array); 
+        //Perform JSON encoding of the array to pass
+        //to jQuery method
+        $jsonArray = json_encode($filteredArray); 
     }
     
-    //insert filtered tweets in the tweets table
-    insertTweets($client, $array);
+    //Insert filtered tweets in the tweets table
+    //of DynamoDB
+    insertTweets($client, $filteredArray);
     
+    //Send JSON encoded array to jQuery method
     print $jsonArray;
-}
+}//end of filterTweets()
 
-function insertTweets($client, array $array) {
-    
-    foreach($array as $tweet) {
+/*
+ * Function to insert the filtered tweets into 
+ * tweets table of DynamoDB
+ */
+function insertTweets($client, array $filteredArray) {
+    //Retrieve tweet content to store in columns of
+    //tweets table
+    foreach($filteredArray as $tweet) {
         //Clean the inputs before storing
         $twitterId = addslashes($tweet['twitter_id']);
         $text = addslashes($tweet['text']);
@@ -167,11 +185,12 @@ function insertTweets($client, array $array) {
         $rangeId = $tweet['rangeId'];
         $created_at = $tweet['created_at'];
 
+        //Name of the DynamoDB table which stored
+        //filtered tweet content
         $tableName = 'tweets';
 
-        
         //We store the new post in the database, to be able to read it later
-        //insert into AWS dynamoDb
+        //Insert into AWS dynamoDb
         $insertResult = $client->putItem(array(
             'TableName' => $tableName,
             'Item' => array(
@@ -188,12 +207,7 @@ function insertTweets($client, array $array) {
                 ),
         ));
     }
-}
-
-function contains( $string, array $search, $caseInsensitive=false ){
-    $exp = '/'.implode('|',array_map('preg_quote',$search)).($caseInsensitive?'/i':'/');
-    return preg_match($exp, $string)?true:false;
-}
+}//end of insertTweets()
 
 ?>
 
