@@ -10,7 +10,8 @@ $(document).ready (function() {
     }); 
 });
 
-
+//Get tweets from jsonArray of AWSgetRawTweets.php
+//and display
 function getTweets(id) {
     
     $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackWords=" + trackWords,
@@ -24,6 +25,7 @@ function getTweets(id) {
             });
 }
 
+//Add tweet 'div' elements
 function addNew(item) {
     if ($('#tweets div.tweet').length > 9) { //If we have more than nine tweets
         $('#tweets div.tweet:first').toggle(500);//remove it from the screen
@@ -33,6 +35,7 @@ function addNew(item) {
     renderTweet(item);
 }
 
+//Display tweet content within 'div' element
 function renderTweet(item) {
     var importanceColor = getImportanceColor(item.followers_count);
     var sentimentColor = getSentimentColor(item.sentiment);
@@ -49,11 +52,14 @@ function renderTweet(item) {
     );
 }
 
+//Get colour based on number of followers
 function getImportanceColor(number) {
     rgb = 255 - Math.floor(16 * (Math.log(number + 1) + 1)); //should return about 0 for 0 followers and 255 for 4million (Ashton Kutchner? Obama?)
     return 'rgb(' + rgb + ',0,0)';
 }
 
+//Get sentiment colour based on sentiment 
+//returned from analysis 
 function getSentimentColor(text) {
     if (text === "positive") {
         color = "green";
@@ -67,8 +73,10 @@ function getSentimentColor(text) {
     return color;
 }
 
+//Retrieve tweets from AWSgetRawTweets every 300 secs
 function poll() {
     timeOut = setTimeout('poll()', 300);//It calls itself every xms
+    //Function call to get tweets and display
     getTweets(last);
 }
 
