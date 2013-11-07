@@ -1,68 +1,65 @@
 last = '';
 timeOut = "";
-trackWords= "";
+trackWords = "";
 
-$(document).ready (function() {  
+/* set up the textbox to get the trackWords */
+$(document).ready(function() {
     //set up the click function for the getTweets button
-    $('#submitTrackWords').click(function() {       
-         trackwords = $('#trackWords').val();//get words
+    $('#submitTrackWords').click(function() {
+        trackWords = $('#trackWords').val();//get words
         $('#trackWords').val(""); //empty textbox
-    }); 
+        $('#tweets').empty(); //empty tweets
+        $('#tracking').html("Tracking: " + trackWords);
+    });
 });
 
-//Get tweets from jsonArray of AWSgetRawTweets.php
-//and display
+
 function getTweets(id) {
     
-    $.getJSON("AWSgetRawTweets.php?start=" + id  + "&trackWords=" + trackWords,
+
+    $.getJSON("AWSgetRawTweets.php?start=" + id + "&trackWords=" + trackWords,
             function(data) {
-                    console.log(data);          
-                $.each(data, function(count, item) {
-                    //Function call to add tweet 'div' element
-                    addNew(item);
-                    //Set last to contain range value (time())
-                    //from json object returned
-                    last = item.rangeId;
-                    console.log(item.rangeId);
-                });
+                    
+                    $.each(data, function(count, item) {
+                        
+                        addNew(item);
+                        last = item.rangeId.N;
+                      
+                    });
             });
 }
 
-//Add tweet 'div' elements
 function addNew(item) {
     if ($('#tweets div.tweet').length > 9) { //If we have more than nine tweets
         $('#tweets div.tweet:first').toggle(500);//remove it from the screen
         $('#tweets div.tweet:first').removeClass('tweet');//and it's class
         $("#tweets div:hidden").remove(); //sweeps the already hidden elements
     }
+
     renderTweet(item);
 }
 
-//Display tweet content within 'div' element
 function renderTweet(item) {
-    var importanceColor = getImportanceColor(item.followers_count);
-    var sentimentColor = getSentimentColor(item.sentiment);
-    var imageLink = "http://twitter.com/" + item.screen_name;
-    var createdLink = "http://twitter.com/" + item.screen_name + "/status/" + item.rangeId;
+    var importanceColor = getImportanceColor(item.followers_count.S);
+    var sentimentColor = getSentimentColor(item.sentiment.S);
+    var imageLink = "http://twitter.com/" + item.screen_name.S;
+    var createdLink = "http://twitter.com/" + item.screen_name.S + "/status/" + item.rangeId.N;
 
     $("#tweets")
-    .append($("<div>").addClass("tweet").attr("id", item.indexId)
-    .append($("<img>").attr("src", item.profile_image_url).addClass("image"))
-    .append($("<a>").attr("href", imageLink).append(item.screen_name).attr("style", "color:" + importanceColor))
-    .append($("<p>").append(item.text).addClass("tweetText"))
-    .append($("<p>").append("<br>created ").append(item.created_at).addClass("created"))
-    .append($("<p>").addClass("sentiment").append("Sentiment Analysis: ").append(item.sentiment).attr("style", "color:" + sentimentColor))
-    );
+            .append($("<div>").addClass("tweet").attr("id", item.rangeId.N)
+            .append($("<img>").attr("src", item.profile_image_url.S).addClass("image"))
+            .append($("<a>").attr("href", imageLink).append(item.screen_name.S).attr("style", "color:" + importanceColor))
+            .append($("<p>").append(item.text.S).addClass("tweetText"))
+            .append($("<p>").append("<br>created ").append(item.created_at.S).addClass("created"))
+            .append($("<p>").addClass("sentiment").append("Sentiment Analysis: ").append(item.sentiment.S).attr("style", "color:" + sentimentColor))
+            );
 }
 
-//Get colour based on number of followers
 function getImportanceColor(number) {
     rgb = 255 - Math.floor(16 * (Math.log(number + 1) + 1)); //should return about 0 for 0 followers and 255 for 4million (Ashton Kutchner? Obama?)
     return 'rgb(' + rgb + ',0,0)';
 }
 
-//Get sentiment colour based on sentiment 
-//returned from analysis 
 function getSentimentColor(text) {
     if (text === "positive") {
         color = "green";
@@ -76,11 +73,8 @@ function getSentimentColor(text) {
     return color;
 }
 
-//Retrieve tweets from AWSgetRawTweets every 300 secs
 function poll() {
     timeOut = setTimeout('poll()', 300);//It calls itself every xms
-    //Function call to get tweets based on the 
-    //range value of last displayed tweet
     getTweets(last);
 }
 

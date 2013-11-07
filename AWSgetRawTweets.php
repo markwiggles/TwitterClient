@@ -25,46 +25,47 @@ $client = DynamoDbClient::factory(array(
             'region' => 'us-west-2'
         ));
 
-//Get the start value which have been sent by the ajax method
+//get the start value and trackwords which have been sent by the ajax method
 if (isset($_GET['start'])) {
-    $start = time();
-    //$start = mysql_real_escape_string($_GET['start']);
+
+    $start = (int) $_GET['start'];
+    $comparision = 'GT';
 } else {
+
     $start = time();
+    $comparision = 'LE';
 }
 
-//Get the trackwords which have been sent by the ajax method
+//$_GET['trackWords'] = "justin%Bieber,Lady%Gaga";
+
 if (isset($_GET['trackWords'])) {
+
     //needs to go to array
-    //$trackWords = $_GET['trackWords'];
-    
-    $trackWords = array('life'); //testing
-     
+    $words = str_replace("%", " ", $_GET['trackWords']);
+    $trackWords = explode(',', $words);
 } else {
     //test array
-    $trackWords = array('life'); //testing
+    $trackWords = array('bieber'); //testing
+    
 }
 
-//Function call to begin retrieving, filtering & storing tweets
-getRawTweets($client, $start);
+//$trackWords = array('bieber');
+
+getRawTweetsFromAWS($client, $start, $comparision);
 
 
 /*
- * Function to get the tweets from the AWS database, 
- * passing the start value from the browser 
- * (if there is one) else defaults to the last 
- * start value - ie the last tweet in the database
+ * function to get the tweets from the AWS database, passing the start value from the browser (if there is one)
+ * else defaults to the last start value - ie the last tweet in the database
  */
-function getRawTweets($client, $start_value) {
-    //Name of the DynamoDB table which stores
-    //raw tweets from the twitter stream
-    $tableName = 'MSrawTweets';
-    
-    //Connect to DynamoDB and retrieve last 100 rows
-    //from MSrawTweets table
+
+function getRawTweetsFromAWS($client, $start_value, $comparision) {
+
+    $tableName = 'tweets';
+
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 100,
+        'Limit' => 10,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -72,24 +73,57 @@ function getRawTweets($client, $start_value) {
                 ),
                 'ComparisonOperator' => 'EQ'
             ),
-
             'rangeId' => array(
                 'AttributeValueList' => array(
                     array('N' => $start_value),
-                    
                 ),
-                'ComparisonOperator' => 'LE'
+                'ComparisonOperator' => $comparision
             )
         ),
         'ScanIndexForward' => false
     ));
+
+    //print "rangeID startValue: " .$start_value."<br><br>";
+    //print($result);
     
-    //Store the entire result set from the 'Query'
-    $resultObj = $result['Items'];
+    //$jsonObj = $result['Items'];
+    //filter required tweets
+    //filterTweets($client, $jsonObj);
+
+    filterRawTweets($result);
+}
+
+/*
+ * function to filter the tweets from the AWS database, passing the start value from the browser (if there is one)
+ * else defaults to the last start value - ie the last tweet in the database
+ */
+
+function filterRawTweets($result) {
     
-    //Function call to filter the tweets
-    filterTweets($client, $resultObj);
-}//end of getRawTweets
+    $tweets = $result['Items']; //get the tweets 
+    global $trackWords; //use the trackWords to find
+    $answers = array(); //place the answers in an array to pass on
+    
+    for ($i = 0; $i < $result['Count']; $i++) {
+        $countFind = 0;
+        foreach ($trackWords as $trackWord) {
+            if (stripos($tweets[$i]['text']['S'], $trackWord)) {
+                $countFind++;
+            }  
+        }
+        
+        if($countFind > 0) {
+            //place in array
+            array_push($answers,$tweets[$i]);
+        }
+        
+    }//end for
+    
+    print json_encode($answers);
+    
+    //print $tweets[0]['text']['S'];
+    //print $result['Items'][0]['text']['S'];
+}
 
 /*
  * Function to filter the tweets from the AWS database, 
