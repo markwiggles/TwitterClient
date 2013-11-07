@@ -18,6 +18,7 @@ use Aws\DynamoDb\DynamoDbClient;
 //Configure  Datumbox API Key. 
 define('DATUMBOX_API_KEY', 'f170aec75a2c1270b7ad451ddd07db79');
 
+//Setup client connection to DynamoDB
 $client = DynamoDbClient::factory(array(
             'key' => 'AKIAIK7RCPMWTZVQWJIA',
             'secret' => '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',
