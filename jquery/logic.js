@@ -18,7 +18,10 @@ function getTweets(id) {
             function(data) {
                     console.log(data);          
                 $.each(data, function(count, item) {
+                    //Function call to add tweet 'div' element
                     addNew(item);
+                    //Set last to contain range value (time())
+                    //from json object returned
                     last = item.rangeId;
                     console.log(item.rangeId);
                 });
@@ -76,7 +79,8 @@ function getSentimentColor(text) {
 //Retrieve tweets from AWSgetRawTweets every 300 secs
 function poll() {
     timeOut = setTimeout('poll()', 300);//It calls itself every xms
-    //Function call to get tweets and display
+    //Function call to get tweets based on the 
+    //range value of last displayed tweet
     getTweets(last);
 }
 
