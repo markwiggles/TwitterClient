@@ -16,7 +16,7 @@ require_once('lib/TwitterSentimentAnalysis.php');
 use Aws\DynamoDb\DynamoDbClient;
 
 // Configure  Datumbox API Key. 
-define('DATUMBOX_API_KEY', '78006b9cafa5dbd4f0b57f6ae0c897d7');
+define('DATUMBOX_API_KEY', 'f170aec75a2c1270b7ad451ddd07db79');
 
 $client = DynamoDbClient::factory(array(
             'key' => 'AKIAIK7RCPMWTZVQWJIA',
@@ -143,10 +143,11 @@ function filterTweets($client, array $jsonObj) {
         }
         $jsonArray = json_encode($array); 
     }
-    print $jsonArray;
     
     //insert filtered tweets in the tweets table
-    //insertTweets($client, $array);
+    insertTweets($client, $array);
+    
+    print $jsonArray;
 }
 
 function insertTweets($client, array $array) {
