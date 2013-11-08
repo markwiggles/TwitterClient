@@ -11,12 +11,9 @@ error_reporting(E_ALL);
  */
 
 require 'AWSSDKforPHP/aws.phar';
-require_once('lib/TwitterSentimentAnalysis.php');
 
 use Aws\DynamoDb\DynamoDbClient;
 
-//Configure  Datumbox API Key. 
-define('DATUMBOX_API_KEY', 'f170aec75a2c1270b7ad451ddd07db79');
 
 //Setup client connection to DynamoDB
 $client = DynamoDbClient::factory(array(
@@ -35,18 +32,18 @@ if (isset($_GET['start'])) {
     $comparision = 'LE';
 }
 
-$_GET['trackWords'] = "the"; //for testing
+$comparision = 'LE';
+
+//$_GET['trackWords'] = "the"; //for testing
 
 if (isset($_GET['trackWords'])) {
-
     //trackwords to array
     $words = str_replace("%", " ", $_GET['trackWords']);
     $trackWords = explode(',', $words);
 } else {
     //test array
-    $trackWords = array('the'); //testing
+    $trackWords = array('a'); //testing
 }
-
 
 getTweetsFromAWS($client, $start, $comparision);
 
@@ -63,7 +60,7 @@ function getTweetsFromAWS($client, $start_value, $comparision) {
 
     $result = $client->query(array(
         'TableName' => $tableName,
-        'Limit' => 10,
+        'Limit' => 2,
         'KeyConditions' => array(
             'indexId' => array(
                 'AttributeValueList' => array(
@@ -104,7 +101,6 @@ function filterRawTweets($result) {
             array_push($answers,$tweets[$i]);//place answer in array
         }       
     }//end for loop 
-    $answers = array_reverse($answers);
     
     print json_encode($answers); //send off the answers
 }
@@ -114,7 +110,7 @@ function filterRawTweets($result) {
  * Function to insert the filtered tweets into 
  * tweets table of DynamoDB
  */
-function insertTweets($client, array $filteredArray) {
+function insertTweets($client, array $answers) {
     //Retrieve tweet content to store in columns of
     //tweets table
     foreach($filteredArray as $tweet) {

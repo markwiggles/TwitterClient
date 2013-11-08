@@ -1,13 +1,28 @@
 last = '';
+first = '';
 timeOut = "";
 chartTimeOut = "";
+trackWords = "";
 positive = 0;
 negative = 0;
 neutral = 0;
 
 
+/* set up the textbox to get the trackWords */
+$(document).ready(function() {
+    //set up the click function for the getTweets button
+    $('#submitTrackWords').click(function() {
+        trackWords = $('#trackWords').val();//get words
+        $('#trackWords').val(""); //empty textbox
+        $('#tweets').empty(); //empty tweets
+        $('#tracking').html("Tracking: " + trackWords);
+    });
+});
+//
+//
+
 function getTweets(id) {
-    $.getJSON("AWSgetTweets.php?start=" + id,
+    $.getJSON("AWSgetTweets.php?start=" + id + "&trackWords=" + trackWords,
             function(data) {
 
                 processChartData(data);
@@ -21,7 +36,7 @@ function getTweets(id) {
 
 function addNew(item) {
     if ($('#tweets div.tweet').length > 9) { //If we have more than nine tweets
-        $('#tweets div.tweet:first').toggle(500);//remove it from the screen
+        $('#tweets div.tweet:first').toggle(200);//remove it from the screen
         $('#tweets div.tweet:first').removeClass('tweet');//and it's class
         $("#tweets div:hidden").remove(); //sweeps the already hidden elements
     }
@@ -63,7 +78,7 @@ function getSentimentColor(text) {
 }
 
 function poll() {
-    timeOut = setTimeout('poll()', 300);//It calls itself every 200ms
+    timeOut = setTimeout('poll()', 400);//It calls itself every xms
     getTweets(last);
 }
 
@@ -74,7 +89,6 @@ $(document).ready(function() {
 
 /*************** CHART FUNCTIONS**********************************************************/
 
-indexId = "";
 chartTimeOut = "";
 
 
@@ -87,11 +101,7 @@ google.setOnLoadCallback(getChartData);
 //drawVisualization();
 
 function getChartData() {
-
-    $.getJSON("AWSgetChartData.php?indexId=" + indexId,
-            function(item) {
-                drawChart1(item);
-            });
+    drawChart1();
 }
 
 
@@ -138,7 +148,6 @@ $(document).ready(function() {
 
 function processChartData(data) {
 
-    sentimentArray = new Array();
     positive = 0;
     negative = 0;
     neutral = 0;
@@ -153,9 +162,8 @@ function processChartData(data) {
             neutral++;
         }
     });
-    
-    if(positive === 0 && negative === 0 && neutral === 0) {
+
+    if (positive === 0 && negative === 0 && neutral === 0) {
         neutral = 1;
     }
-
 }
