@@ -31,25 +31,22 @@ if (isset($_GET['start'])) {
     $start = (int) $_GET['start'];
     $comparision = 'GT';
 } else {
-
     $start = time();
     $comparision = 'LE';
 }
 
-//$_GET['trackWords'] = "justin%Bieber,Lady%Gaga";
+$_GET['trackWords'] = "the"; //for testing
 
 if (isset($_GET['trackWords'])) {
 
-    //needs to go to array
+    //trackwords to array
     $words = str_replace("%", " ", $_GET['trackWords']);
     $trackWords = explode(',', $words);
 } else {
     //test array
-    $trackWords = array('bieber'); //testing
-    
+    $trackWords = array('the'); //testing
 }
 
-//$trackWords = array('bieber');
 
 getTweetsFromAWS($client, $start, $comparision);
 
@@ -106,7 +103,9 @@ function filterRawTweets($result) {
         if($countFind > 0) {
             array_push($answers,$tweets[$i]);//place answer in array
         }       
-    }//end for loop  
+    }//end for loop 
+    $answers = array_reverse($answers);
+    
     print json_encode($answers); //send off the answers
 }
 
