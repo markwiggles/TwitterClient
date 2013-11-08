@@ -5,10 +5,7 @@
         <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
         <script src="jquery/jquery-1.10.2.min.js"></script>
         <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-
-        <script src="jquery/charts.js"></script>
         <script src="jquery/logic.js"></script>
-
 
         <link rel="stylesheet" type="text/css" href="css/mainStylesheet.css"/>
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen"/>
@@ -39,10 +36,9 @@
                 </div><!--end input-->
                 <div class="row-fluid">
                     <div class="btn-group btn-group-sm span2">
-                        <button type="button" class="btn btn-default" onclick="clearTimeout(timeOut);
-                            console.log('pause');">Pause</button>
-                        <button type="button" class="btn btn-default"  onclick="poll();
-                            console.log('run');">Run</button>
+                        <button type="button" class="btn btn-default" onclick="clearTimeout(timeOut);clearTimeout(chartTimeOut); console.log('pause');">Pause</button>
+                    <button type="button" class="btn btn-default"  onclick="poll(); pollChart();console.log('run');">Run</button>
+
                     </div>
                     
                     <div class="span4 offset1"><h4 id="tracking"></h4></div>

@@ -1,31 +1,21 @@
 last = '';
 timeOut = "";
-trackWords = "";
-
-/* set up the textbox to get the trackWords */
-$(document).ready(function() {
-    //set up the click function for the getTweets button
-    $('#submitTrackWords').click(function() {
-        trackWords = $('#trackWords').val();//get words
-        $('#trackWords').val(""); //empty textbox
-        $('#tweets').empty(); //empty tweets
-        $('#tracking').html("Tracking: " + trackWords);
-    });
-});
+chartTimeOut = "";
+positive = 0;
+negative = 0;
+neutral = 0;
 
 
 function getTweets(id) {
-    
-
-    $.getJSON("AWSgetRawTweets.php?start=" + id + "&trackWords=" + trackWords,
+    $.getJSON("AWSgetTweets.php?start=" + id,
             function(data) {
-                    
-                    $.each(data, function(count, item) {
-                        
-                        addNew(item);
-                        last = item.rangeId.N;
-                      
-                    });
+
+                processChartData(data);
+
+                $.each(data, function(count, item) {
+                    addNew(item);
+                    last = item.rangeId.N;
+                });
             });
 }
 
@@ -35,18 +25,17 @@ function addNew(item) {
         $('#tweets div.tweet:first').removeClass('tweet');//and it's class
         $("#tweets div:hidden").remove(); //sweeps the already hidden elements
     }
-
     renderTweet(item);
 }
 
 function renderTweet(item) {
-    var importanceColor = getImportanceColor(item.followers_count.S);
+    var importanceColor = getImportanceColor(item.followers_count.N);
     var sentimentColor = getSentimentColor(item.sentiment.S);
     var imageLink = "http://twitter.com/" + item.screen_name.S;
     var createdLink = "http://twitter.com/" + item.screen_name.S + "/status/" + item.rangeId.N;
 
     $("#tweets")
-            .append($("<div>").addClass("tweet").attr("id", item.rangeId.N)
+            .append($("<div>").addClass("tweet").attr("id", item.indexId.N)
             .append($("<img>").attr("src", item.profile_image_url.S).addClass("image"))
             .append($("<a>").attr("href", imageLink).append(item.screen_name.S).attr("style", "color:" + importanceColor))
             .append($("<p>").append(item.text.S).addClass("tweetText"))
@@ -74,10 +63,99 @@ function getSentimentColor(text) {
 }
 
 function poll() {
-    timeOut = setTimeout('poll()', 300);//It calls itself every xms
+    timeOut = setTimeout('poll()', 300);//It calls itself every 200ms
     getTweets(last);
 }
 
 $(document).ready(function() {
     poll();
 });
+
+
+/*************** CHART FUNCTIONS**********************************************************/
+
+indexId = "";
+chartTimeOut = "";
+
+
+// Load the Visualization API and the piechart package.
+google.load('visualization', '1.0', {'packages': ['corechart']});
+
+// Set a callback to run when the Google Visualization API is loaded.
+google.setOnLoadCallback(getChartData);
+
+//drawVisualization();
+
+function getChartData() {
+
+    $.getJSON("AWSgetChartData.php?indexId=" + indexId,
+            function(item) {
+                drawChart1(item);
+            });
+}
+
+
+
+function drawChart1() {
+
+    // Create the data table.
+    var data1 = new google.visualization.DataTable();
+    data1.addColumn('string', 'Sentiment');
+    data1.addColumn('number', 'Type');
+    data1.addRows([
+        ['Positive', positive],
+        ['Neutral', neutral],
+        ['Negative', negative]
+    ]);
+
+    // Set chart options
+    var options1 = {'title': 'Trending Sentiment',
+        width: 400,
+        height: 300,
+    };
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart1 = new google.visualization.PieChart(document.getElementById('chart1'));
+    chart1.draw(data1, options1);
+}
+
+
+
+function pollChart() {
+    chartTimeOut = setTimeout('pollChart()', 2000);//It calls itself every xms
+    getChartData();
+
+
+
+// Callback that creates and populates a data table,
+// instantiates the pie chart, passes in the data and
+// draws it.
+}
+
+$(document).ready(function() {
+    pollChart();
+});
+
+function processChartData(data) {
+
+    sentimentArray = new Array();
+    positive = 0;
+    negative = 0;
+    neutral = 0;
+
+    //iterate through the data array and calculate pie chart data
+    $.each(data, function(count, item) {
+        if (item.sentiment.S === 'positive') {
+            positive++;
+        } else if (item.sentiment.S === 'negative') {
+            negative++;
+        } else {
+            neutral++;
+        }
+    });
+    
+    if(positive === 0 && negative === 0 && neutral === 0) {
+        neutral = 1;
+    }
+
+}

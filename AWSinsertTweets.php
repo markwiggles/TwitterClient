@@ -36,7 +36,7 @@ function storeTweetsInDatabase($tweet) {
     $rangeId = time();
     $created_at = date("D M j G:i:s" ,time());
     
-    $tableName = 'tweets';
+    $tableName = 'MStweets';
 
     //get the sentiment 
     $TwitterSentimentAnalysis = new TwitterSentimentAnalysis(DATUMBOX_API_KEY);

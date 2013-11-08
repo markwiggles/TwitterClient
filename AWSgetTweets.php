@@ -62,7 +62,7 @@ getTweetsFromAWS($client, $start, $comparision);
 
 function getTweetsFromAWS($client, $start_value, $comparision) {
 
-    $tableName = 'tweets';
+    $tableName = 'MStweets';
 
     $result = $client->query(array(
         'TableName' => $tableName,
